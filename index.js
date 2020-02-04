@@ -96,7 +96,7 @@ function pluginInit (patternlab) {
       JSON.stringify(pluginConfig, null, 2));
   } catch (ex) {
     console.trace(
-      'plugin-node-tab: Error occurred while writing pluginFile configuration');
+      'plugin-node-data-inheritance: Error occurred while writing pluginFile configuration');
     console.log(ex);
   }
 
@@ -119,14 +119,29 @@ function pluginInit (patternlab) {
         }
       } catch (ex) {
         console.trace(
-          'plugin-node-tab: Error occurred while copying pluginFile',
+          'plugin-node-data-inheritance: Error occurred while copying pluginFile',
           pluginFiles[i]);
         console.log(ex);
       }
     }
   }
+  //setup listeners if not already active. we also enable and set the plugin as initialized
+  if (!patternlab.config.plugins) {
+    patternlab.config.plugins = {};
+  }
 
-  registerEvents(patternlab); patternlab.config[pluginName] = true;
+  //attempt to only register events once
+  if (
+    patternlab.config.plugins[pluginName] !== undefined &&
+    patternlab.config.plugins[pluginName].enabled &&
+    !patternlab.config.plugins[pluginName].initialized
+  ) {
+    //register events
+    registerEvents(patternlab);
+
+    //set the plugin initialized flag to true to indicate it is installed and ready
+    patternlab.config.plugins[pluginName].initialized = true;
+  }
 }
 
 module.exports = pluginInit
