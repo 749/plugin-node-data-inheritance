@@ -2,6 +2,8 @@ var pluginName = 'plugin-node-data-inheritance';
 var path = require('path');
 var fs = require('fs-extra');
 var glob = require('glob');
+var jsonCopy = require('patternlab-node/core/lib/json_copy'),
+    plutils = require('patternlab-node/core/lib/utilities');
 
 function getPatternByName (patternlab, patternName) {
   for (var i = 0; i < patternlab.patterns.length; i++) {
@@ -66,8 +68,16 @@ function generatePatternJson (patternlab, pattern) {
   }
 }
 
+function writeGeneratedJson(patternlab, pattern) {
+  var allData = jsonCopy(patternlab.data, 'config.paths.source.data global data');
+  allData = plutils.mergeData(allData, pattern.jsonFileData);
+  var jsonFile = path.join(patternlab.config.paths.public.patterns, pattern.getPatternLink(patternlab, 'custom', '-data.json'))
+  fs.outputFileSync(jsonFile, JSON.stringify(allData));
+}
+
 function registerEvents (patternlab) {
   patternlab.events.on('patternlab-pattern-before-data-merge', generatePatternJson);
+  patternlab.events.on('patternlab-pattern-write-begin', writeGeneratedJson)
 }
 
 function getPluginFrontendConfig () {
