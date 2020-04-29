@@ -1,156 +1,94 @@
-var pluginName = 'plugin-node-data-inheritance';
-var path = require('path');
-var fs = require('fs-extra');
-var glob = require('glob');
-var jsonCopy = require('patternlab-node/core/lib/json_copy'),
-    plutils = require('patternlab-node/core/lib/utilities');
+'use strict'
+const packageJson = require('./package.json')
 
-function getPatternByName (patternlab, patternName) {
-  for (var i = 0; i < patternlab.patterns.length; i++) {
-    if (patternlab.patterns[i].name === patternName) {
-      return patternlab.patterns[i];
-    }
-  }
+const log = require('@pattern-lab/core/src/lib/log')
 
-  return null;
-}
+const pluginName = packageJson['@pattern-lab-plugin'].name
+const pluginModuleName = packageJson.name
 
-function arrayReplaceRecursive (arr) {
-  var i = 0
-  var p = ''
-  var argl = arguments.length
-  var retObj
+const path = require('path')
 
-  if (argl < 2) {
-    throw new Error('There should be at least 2 arguments passed to arrayReplaceRecursive()')
-  }
+const fs = require('fs-extra')
+const glob = require('glob')
 
-  if (Object.prototype.toString.call(arr) === '[object Array]') {
-    retObj = [];
-    for (p in arr) {
-      retObj.push(arr[p]);
-    }
-  } else {
-    retObj = {};
-    for (p in arr) {
-      retObj[p] = arr[p];
-    }
-  }
-
-  for (i = 1; i < argl; i++) {
-    for (p in arguments[i]) {
-      if (retObj[p] && typeof retObj[p] === 'object') {
-        retObj[p] = arrayReplaceRecursive(retObj[p], arguments[i][p]);
-      } else {
-        retObj[p] = arguments[i][p];
-      }
-    }
-  }
-
-  return retObj;
-}
-
-function generatePatternJson (patternlab, pattern) {
-  if (pattern.patternLineages) {
-    for (var i = 0; i < pattern.patternLineages.length; i++) {
-      var regex = new RegExp(/\//, 'g');
-      var thePart = pattern.patternLineages[i].lineagePath.replace(regex, '\\').split('\\').pop().split('.')[0];
-      var currentPattern = getPatternByName(patternlab, thePart);
-      if (currentPattern) {
-        generatePatternJson(patternlab, currentPattern);
-        if (!pattern.jsonFileData) {
-          pattern.jsonFileData = currentPattern.jsonFileData;
-        } else {
-          pattern.jsonFileData = arrayReplaceRecursive(currentPattern.jsonFileData, pattern.jsonFileData);
-        }
-      }
-    }
-  }
-}
-
-function writeGeneratedJson(patternlab, pattern) {
-  var allData = jsonCopy(patternlab.data, 'config.paths.source.data global data');
-  allData = plutils.mergeData(allData, pattern.jsonFileData);
-  var jsonFile = path.join(patternlab.config.paths.public.patterns, pattern.getPatternLink(patternlab, 'custom', '-data.json'))
-  fs.outputFileSync(jsonFile, JSON.stringify(allData));
-}
-
-function registerEvents (patternlab) {
-  patternlab.events.on('patternlab-pattern-before-data-merge', generatePatternJson);
-  patternlab.events.on('patternlab-pattern-write-begin', writeGeneratedJson)
-}
+const inheritance = require('./src/inheritance')
 
 function getPluginFrontendConfig () {
   return {
-    'name': 'pattern-lab\/' + pluginName, 'templates': [],
-    'stylesheets': [],
-    'javascripts': ['patternlab-components\/pattern-lab\/' + pluginName +
-      '\/js\/' + pluginName + '.js'],
-    'onready': '',
-    'callback': ''
+    name: pluginName,
+    templates: [],
+    stylesheets: [],
+    javascripts: [],
+    onready: '',
+    callback: ''
   }
 }
 
+/**
+ * @param {Patternlab} patternlab
+ */
 function pluginInit (patternlab) {
   if (!patternlab) {
-    console.error('patternlab object not provided to plugin-init');
-    process.exit(1);
+    console.error('patternlab object not provided to plugin-init')
+    process.exit(1)
   }
 
-  var pluginConfig = getPluginFrontendConfig();
+  // write the plugin json to public/patternlab-components
+  var pluginConfig = getPluginFrontendConfig()
   var pluginConfigPathName = path.resolve(patternlab.config.paths.public.root,
-    'patternlab-components', 'packages');
+    'patternlab-components', 'packages')
 
   try {
     fs.outputFileSync(pluginConfigPathName + '/' + pluginName + '.json',
-      JSON.stringify(pluginConfig, null, 2));
+      JSON.stringify(pluginConfig, null, 2))
   } catch (ex) {
-    console.trace(
-      'plugin-node-data-inheritance: Error occurred while writing pluginFile configuration');
-    console.log(ex);
+    console.trace(`${pluginName}: Error occurred while writing pluginFile configuration`)
+    console.log(ex)
   }
 
+  // add the plugin config to the patternlab-object
   if (!patternlab.plugins) {
     patternlab.plugins = []
   }
 
-  patternlab.plugins.push(pluginConfig);
-  var pluginFiles = glob.sync(__dirname + '/dist/**/*');
+  patternlab.plugins.push(pluginConfig)
+
+  // write the plugin dist folder to public/pattern-lab
+  var pluginFiles = glob.sync(path.join(__dirname, 'dist', '**', '*'))
   if (pluginFiles && pluginFiles.length > 0) {
     for (var i = 0; i < pluginFiles.length; i++) {
       try {
-        var fileStat = fs.statSync(pluginFiles[i]);
+        var fileStat = fs.statSync(pluginFiles[i])
         if (fileStat.isFile()) {
-          var relativePath = path.relative(__dirname, pluginFiles[i]).replace('dist', '');
+          var relativePath = path.relative(__dirname, pluginFiles[i]).replace('dist', '')
           var writePath = path.join(patternlab.config.paths.public.root,
-            'patternlab-components', 'pattern-lab', pluginName, relativePath);
-          var tabJSFileContents = fs.readFileSync(pluginFiles[i], 'utf8');
-          fs.outputFileSync(writePath, tabJSFileContents);
+            'patternlab-components', 'pattern-lab', pluginName, relativePath)
+          var tabJSFileContents = fs.readFileSync(pluginFiles[i], 'utf8')
+          fs.outputFileSync(writePath, tabJSFileContents)
         }
       } catch (ex) {
-        console.trace(
-          'plugin-node-data-inheritance: Error occurred while copying pluginFile',
-          pluginFiles[i]);
-        console.log(ex);
+        console.trace(`${pluginName}: Error occurred while copying pluginFile`, pluginFiles[i])
+        console.log(ex)
       }
     }
   }
-  //setup listeners if not already active. we also enable and set the plugin as initialized
+  // setup listeners if not already active. we also enable and set the plugin as initialized
   if (!patternlab.config.plugins) {
-    patternlab.config.plugins = {};
+    patternlab.config.plugins = {}
   }
 
-  //attempt to only register events once
+  // attempt to only register events once
   if (
-    patternlab.config.plugins[pluginName] !== undefined &&
-    patternlab.config.plugins[pluginName].enabled &&
-    !patternlab.config.plugins[pluginName].initialized
+    patternlab.config.plugins[pluginModuleName] !== undefined &&
+    patternlab.config.plugins[pluginModuleName].enabled &&
+    !patternlab.config.plugins[pluginModuleName].initialized
   ) {
-    //register events
-    registerEvents(patternlab);
+    // register events
+    inheritance.registerEvents(patternlab)
 
-    //set the plugin initialized flag to true to indicate it is installed and ready
-    patternlab.config.plugins[pluginName].initialized = true;
+    // set the plugin initialized flag to true to indicate it is installed and ready
+    patternlab.config.plugins[pluginModuleName].initialized = true
+    log.info(`${pluginName} as ${pluginModuleName} loaded`)
   }
 }
 
