@@ -1,6 +1,6 @@
 {
-  "name": "plugin-node-data-inheritance",
-  "version": "1.0.0-alpha",
+  "name": "@g749/plugin-node-data-inheritance",
+  "version": "1.0.1",
   "description": "Custom data inheritance plugin for Patternlab",
   "main": "index.js",
   "devDependencies": {
