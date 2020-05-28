@@ -7,7 +7,7 @@ This means that data from included patterns is merged with the current pattern. 
 
 To add the Data Inheritance Plugin to your project using [npm](http://npmjs.com/):
 
-    npm install git+https://github.com/Altinn/plugin-node-data-inheritance.git
+`npm install --save @g749/plugin-node-data-inheritance`
 
 Or add it directly to your project's `package.json` file and run `npm install`.
 

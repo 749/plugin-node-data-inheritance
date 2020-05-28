@@ -1,4 +1,8 @@
-var pluginName = 'plugin-node-data-inheritance';
+'use strict'
+var packageJson = require('./package.json')
+
+var pluginName = packageJson['@pattern-lab-plugin'].name
+var pluginModuleName = packageJson.name
 var path = require('path');
 var fs = require('fs-extra');
 var glob = require('glob');
@@ -82,10 +86,10 @@ function registerEvents (patternlab) {
 
 function getPluginFrontendConfig () {
   return {
-    'name': 'pattern-lab\/' + pluginName, 'templates': [],
+    'name': 'pattern-lab\/' + pluginName,
+    'templates': [],
     'stylesheets': [],
-    'javascripts': ['patternlab-components\/pattern-lab\/' + pluginName +
-      '\/js\/' + pluginName + '.js'],
+    'javascripts': [],
     'onready': '',
     'callback': ''
   }
@@ -142,15 +146,16 @@ function pluginInit (patternlab) {
 
   //attempt to only register events once
   if (
-    patternlab.config.plugins[pluginName] !== undefined &&
-    patternlab.config.plugins[pluginName].enabled &&
-    !patternlab.config.plugins[pluginName].initialized
+    patternlab.config.plugins[pluginModuleName] !== undefined &&
+    patternlab.config.plugins[pluginModuleName].enabled &&
+    !patternlab.config.plugins[pluginModuleName].initialized
   ) {
     //register events
     registerEvents(patternlab);
 
     //set the plugin initialized flag to true to indicate it is installed and ready
-    patternlab.config.plugins[pluginName].initialized = true;
+    patternlab.config.plugins[pluginModuleName].initialized = true;
+    console.log(`Loaded ${pluginModuleName} as ${pluginName}.`)
   }
 }
 
