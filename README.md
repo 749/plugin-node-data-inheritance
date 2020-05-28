@@ -14,3 +14,10 @@ Or add it directly to your project's `package.json` file and run `npm install`.
 Note: This plugin needs an event which is not (yet?) available in Patternlab node, if it is to be used / tested the following needs to be added to ln. 360 in patternlab.js (Patternlab core lib):
 
     patternlab.events.emit('patternlab-pattern-before-data-merge', patternlab, pattern);
+
+## Developing
+
+Use the following to install dev dependecies:
+```bash
+PATTERLAB_PLUGIN_DEV=@g749/plugin-node-data-inheritance npm install
+```
