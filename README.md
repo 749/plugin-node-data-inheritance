@@ -15,9 +15,5 @@ Note: This plugin needs an event which is not (yet?) available in Patternlab nod
 
     patternlab.events.emit('patternlab-pattern-before-data-merge', patternlab, pattern);
 
-## Developing
-
-Use the following to install dev dependecies:
-```bash
-PATTERLAB_PLUGIN_DEV=@g749/plugin-node-data-inheritance npm install
-```
+## Note
+Due to the way patterlab-node handles plugins, during the postinstall.js the module is copied from `node_modules/@g749/plugin-node-data-inheritance` to `node_modules/plugin-node-data-inheritance`

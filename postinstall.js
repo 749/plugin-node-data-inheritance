@@ -4,7 +4,7 @@ var packageJson = require('./package.json')
 
 var pluginName = packageJson['@pattern-lab-plugin'].name
 var pluginModuleName = packageJson.name
-var nodeModulesPath = path.join(process.cwd(), 'node_modules')
+var nodeModulesPath = path.join(process.cwd(), '..', '..')
 
 function copyFolderRecursiveSync (source, target) {
   var files = []
@@ -31,7 +31,8 @@ function copyFolderRecursiveSync (source, target) {
   }
 }
 
-if (process.env.PATTERLAB_PLUGIN_DEV !== pluginModuleName) {
+var parentPackageJson = path.resolve(nodeModulesPath, '..', 'package.json')
+if (fs.existsSync(parentPackageJson) && require(parentPackageJson).name !== pluginModuleName) {
   copyFolderRecursiveSync(path.join(nodeModulesPath, pluginModuleName), path.join(nodeModulesPath))
 
   console.log(`Pattern Lab Node Plugin - ${pluginModuleName} installed as ${pluginName}. `)
